@@ -89,10 +89,10 @@ if __name__ == '__main__':
 
 
 
-    img1 = train_df['Filepath'].iloc[0]
-    img = pil.open(img1)
-    img.show()
-    exit()
+    #img1 = train_df['Filepath'].iloc[0]
+    #img = pil.open(img1)
+    #img.show()
+    #exit()
 
 
 
