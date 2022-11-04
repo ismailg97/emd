@@ -16,6 +16,32 @@ import PIL.Image as pil
 from models.model_from_paper import PaperModel
 from models.standard_model import MyModel
 
+
+def resblock( x, filters, strides):
+    if (strides == 1):
+        x_conv = tf.keras.layers.Conv2D(filters=filters, kernel_size=(1, 1), strides=(2, 2))(x)
+        x_conv = tf.keras.layers.BatchNormalization()(x_conv)
+        # x_conv = x
+        fx = tf.keras.layers.Conv2D(filters=filters, kernel_size=(3, 3), padding='same', strides=(2, 2))(x)
+        # fx = tf.keras.layers.Conv2D(filters=filters, kernel_size=(3, 3), padding='same')(x)
+    else:
+        # x_conv = tf.keras.layers.Conv2D(filters=filters, kernel_size=(1, 1))(x)
+        # x_conv = tf.keras.layers.BatchNormalization()(x_conv)
+        x_conv = x
+        fx = tf.keras.layers.Conv2D(filters=filters, kernel_size=(3, 3), padding='same')(x)
+
+    fx = tf.keras.layers.BatchNormalization()(fx)
+    fx = tf.keras.layers.Activation("relu")(fx)
+    fx = tf.keras.layers.Conv2D(filters=filters, kernel_size=(3, 3), padding='same')(fx)
+    out = tf.keras.layers.Add()([x_conv, fx])
+    out = tf.keras.layers.BatchNormalization()(out)
+    out = tf.keras.layers.ReLU()(out)
+    #print(x_conv.shape)
+    #print(fx.shape)
+    return out
+
+
+
 if __name__ == '__main__':
     #Getting the Filepath of the Images and the Labels and concat it in Panda Array(Series) aka Dataframe called images
     image_dir = Path('./imdb_crop')
@@ -88,7 +114,6 @@ if __name__ == '__main__':
     )
 
 
-
     #img1 = train_df['Filepath'].iloc[0]
     #img = pil.open(img1)
     #img.show()
@@ -99,7 +124,28 @@ if __name__ == '__main__':
 
 
     #model = MyModel()
-    model = PaperModel()
+
+    input = tf.keras.Input(shape=(224,224,3))
+    out0 = tf.keras.layers.Conv2D(filters=64, kernel_size=(7, 7), strides=(2, 2), padding="same")(input)
+    out1 = resblock(out0, filters=64, strides=0)
+    out2 = resblock(out1, filters=64, strides=0)
+    out3 = resblock(out2, filters=128, strides=1)
+    out4 = resblock(out3, filters=128, strides=0)
+    out5 = resblock(out4, filters=256, strides=1)
+    out6 = resblock(out5, filters=256, strides=0)
+    out7 = resblock(out6, filters=512, strides=1)
+    out8 = resblock(out7, filters=512, strides=0)
+    out = tf.keras.layers.GlobalAveragePooling2D()(out8)
+    #print(self.dense(out).shape)
+    output = tf.keras.layers.Dense(1, activation="relu")(out)
+
+    regressor = keras.Model(input, output, name="regressor")
+    regressor.summary()
+    #exit()
+
+    model = regressor
+
+    #model = PaperModel()
     model.compile(
         optimizer=tf.keras.optimizers.Adam(learning_rate=0.001),
         loss="mse"

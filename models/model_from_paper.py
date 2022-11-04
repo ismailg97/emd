@@ -37,7 +37,7 @@ class PaperModel(tf.keras.Model):
         print(fx.shape)
         return out
 
-    def call(self, inputs=tf.keras.Input(shape=(224, 224), batch_size=32), training=None, mask=None):
+    def call(self, inputs=tf.keras.Input(shape=(224, 224,3), name="img"), training=None, mask=None):
         print(inputs.shape)
         out0 = tf.keras.layers.Conv2D(filters=64, kernel_size=(7, 7), strides=(2, 2), padding="same")(inputs)
         print(out0.shape)
