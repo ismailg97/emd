@@ -22,6 +22,7 @@ def earth_mover_distance(
             y_true: K.placeholder,
             y_pred: K.placeholder
     ) -> K.placeholder:
+        y_true = tf.cast(y_true, tf.float32)
         return tf.reduce_mean(tf.square(tf.cumsum(y_true, axis=-1) - tf.cumsum(y_pred, axis=-1)), axis=-1)
 
     return _earth_mover_distance
