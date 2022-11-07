@@ -158,32 +158,33 @@ if __name__ == '__main__':
 
 
     for model in models:
-        if model == 'regressorMSE':
-            output = tf.keras.layers.Dense(1, activation="relu")(out)
-            model = keras.Model(input, output)
-            model.compile(
-                optimizer=tf.keras.optimizers.Adam(learning_rate=0.001),
-                loss="mse"
-            )
+        match model:
+            case 'regressorMSE':
+                output = tf.keras.layers.Dense(1, activation="relu")(out)
+                model = keras.Model(input, output)
+                model.compile(
+                    optimizer=tf.keras.optimizers.Adam(learning_rate=0.001),
+                    loss="mse"
+                )
 
 
-        elif model == 'classificatorXE':
-            output = tf.keras.layers.Dense(100, activation="relu")(out)
-            output = tf.keras.layers.Softmax()(output)
-            model = keras.Model(input, output)
-            model.compile(
-                optimizer=tf.keras.optimizers.Adam(learning_rate=0.001),
-                loss=tf.keras.losses.SparseCategoricalCrossentropy()
-            )
+            case 'classificatorXE':
+                output = tf.keras.layers.Dense(100, activation="relu")(out)
+                output = tf.keras.layers.Softmax()(output)
+                model = keras.Model(input, output)
+                model.compile(
+                    optimizer=tf.keras.optimizers.Adam(learning_rate=0.001),
+                    loss=tf.keras.losses.SparseCategoricalCrossentropy()
+                )
 
-        elif model == 'classificatorEMD':
-            output = tf.keras.layers.Dense(100, activation="relu")(out)
-            output = tf.keras.layers.Softmax()(output)
-            model = keras.Model(input, output)
-            model.compile(
-                optimizer=tf.keras.optimizers.Adam(learning_rate=0.001),
-                loss=earth_mover_distance()
-            )
+            case 'classificatorEMD':
+                output = tf.keras.layers.Dense(100, activation="relu")(out)
+                output = tf.keras.layers.Softmax()(output)
+                model = keras.Model(input, output)
+                model.compile(
+                    optimizer=tf.keras.optimizers.Adam(learning_rate=0.001),
+                    loss=earth_mover_distance()
+                )
 
         history = model.fit(
             x=train_images,
