@@ -1,3 +1,5 @@
+import builtins
+
 import numpy as np
 import pandas as pd
 import tensorflow as tf
@@ -10,6 +12,8 @@ from typing import ClassVar, Callable, Union, List
 from loss_functions.emd import earth_mover_distance, self_guided_earth_mover_distance, \
     approximate_earth_mover_distance, GroundDistanceManager, EmdWeightHeadStart
 
+from scipy.io import loadmat
+from src.utils import get_meta, get_age
 
 import ktrain
 import cv2
@@ -43,7 +47,7 @@ def _compile_model(
         ),
         optimizer=tf.keras.optimizers.Adam(
             learning_rate=lr_schedule,
-            #nesterov=True,
+            # nesterov=True,
             momentum=self._OPTIMIZER_MOMENTUM
         ),
         metrics=self._METRICS,
@@ -51,7 +55,7 @@ def _compile_model(
     )
 
 
-def resblock( x, filters, strides):
+def resblock(x, filters, strides):
     if (strides == 1):
         x_conv = tf.keras.layers.Conv2D(filters=filters, kernel_size=(1, 1), strides=(2, 2))(x)
         x_conv = tf.keras.layers.BatchNormalization()(x_conv)
@@ -69,24 +73,26 @@ def resblock( x, filters, strides):
     return out
 
 
-
 if __name__ == '__main__':
-    #Getting the Filepath of the Images and the Labels and concat it in Panda Array(Series) aka Dataframe called images
-    image_dir = Path('./imdb_crop')
+    # Getting the Filepath of the Images and the Labels and concat it in Panda Array(Series) aka Dataframe called images
+    db = "imdb"
+    image_dir = Path('./{}_crop'.format(db))
+    mat_path = './{}_crop/{}.mat'.format(db, db)
     filepaths = pd.Series(list(image_dir.glob(r'**/*.jpg')), name="Filepath").astype(str)
-    ages = pd.Series(filepaths.apply(lambda x: os.path.split(os.path.split(x)[0])[1]), name="Age").astype(int)
+    ages = pd.Series(get_age(mat_path, db), name="Age").astype(int)
+    #ages = pd.Series(filepaths.apply(lambda x: os.path.split(os.path.split(x)[0])[1]), name="Age").astype(int)
     images = pd.concat([filepaths, ages], axis=1).sample(frac=1.0, random_state=1).reset_index(drop=True)
+    #print(images)
+    #exit()
 
-
-    #use only 10000 images to speed up training time
+    # use only 10000 images to speed up training time
     image_df = images.sample(10000, random_state=1).reset_index(drop=True)
-    #splitting images into train and test
+    # splitting images into train and test
     train_df, test_df = train_test_split(image_df, train_size=0.7, shuffle=True, random_state=1)
-
 
     # Defining the ImageDataGenerator and what Preprocessing should be done to the images
     train_generator = tf.keras.preprocessing.image.ImageDataGenerator(
-        rescale=1./255,
+        rescale=1. / 255,
         validation_split=0.2
     )
 
@@ -106,7 +112,7 @@ if __name__ == '__main__':
         shuffle=True,
         seed=42,
         subset="training"
-        )
+    )
 
     val_images = train_generator.flow_from_dataframe(
         dataframe=train_df,
@@ -132,12 +138,10 @@ if __name__ == '__main__':
         shuffle=False
     )
 
-
-    #img1 = train_df['Filepath'].iloc[0]
-    #img = pil.open(img1)
-    #img.show()
-    #exit()
-
+    # img1 = train_df['Filepath'].iloc[0]
+    # img = pil.open(img1)
+    # img.show()
+    # exit()
 
     NrClasses = 100
 
@@ -155,20 +159,23 @@ if __name__ == '__main__':
     out8 = resblock(out7, filters=512, strides=0)
     out = tf.keras.layers.GlobalAveragePooling2D()(out8)
 
+    userInput = builtins.input(
+        'Please enter which Model you want to train:\n 1:regressorMSE \n 2:classificatorXE \n 3:classificatorEMD \n 4:End Training \n')
 
-
-    for model in models:
-        match model:
-            case 'regressorMSE':
+    while userInput != 4:
+        match userInput:
+            case "1":
+                checkpoint_path = "./checkpoints/regressorMSE/regressorMSE"
                 output = tf.keras.layers.Dense(1, activation="relu")(out)
                 model = keras.Model(input, output)
+
                 model.compile(
                     optimizer=tf.keras.optimizers.Adam(learning_rate=0.001),
                     loss="mse"
                 )
 
-
-            case 'classificatorXE':
+            case "2":
+                checkpoint_path = "./checkpoints/classificatorXE/classificatorXE"
                 output = tf.keras.layers.Dense(100, activation="relu")(out)
                 output = tf.keras.layers.Softmax()(output)
                 model = keras.Model(input, output)
@@ -177,7 +184,9 @@ if __name__ == '__main__':
                     loss=tf.keras.losses.SparseCategoricalCrossentropy()
                 )
 
-            case 'classificatorEMD':
+
+            case "3":
+                checkpoint_path = "./checkpoints/classificatorEMD/classificatorEMD"
                 output = tf.keras.layers.Dense(100, activation="relu")(out)
                 output = tf.keras.layers.Softmax()(output)
                 model = keras.Model(input, output)
@@ -186,6 +195,17 @@ if __name__ == '__main__':
                     loss=earth_mover_distance()
                 )
 
+            case _:
+                print("No Model selected. Please try again.")
+                userInput = builtins.input(
+                    'Please enter which Model you want to train:\n 1:regressorMSE \n 2:classificatorXE \n 3:classificatorEMD \n 4:End Training  \n')
+                continue
+
+        if os.path.isfile(checkpoint_path):
+            print("Checkpoint detected. Loading Weights...")
+            model.load_weights(filepath=checkpoint_path)
+        else:
+            print("No Checkpoints detected. Starting new Training")
         history = model.fit(
             x=train_images,
             validation_data=val_images,
@@ -195,11 +215,18 @@ if __name__ == '__main__':
                     monitor="val_loss",
                     patience=5,
                     restore_best_weights=True
-                )
+                ),
+                tf.keras.callbacks.ModelCheckpoint(filepath=checkpoint_path,
+                                                   save_weights_only=True,
+                                                   verbose=1)
             ]
         )
+        print("Training ended. Now to Testing")
+
         predicted_ages = model.predict(test_images)
         actual_ages = test_images.labels
+
+        print("Testing finished. Results are: ")
 
         rmse = np.sqrt(model.evaluate(test_images, verbose=0))
         print("Test RMSE: {:.5f}".format(rmse))
@@ -209,41 +236,13 @@ if __name__ == '__main__':
         print(np.average(predicted_ages))
         print(np.average(actual_ages))
 
-    #regressor = keras.Model(input, output, name="regressor")
-    #regressor.summary()
+        builtins.input("Press something to continue...")
 
-    #classificatorMSE = keras.Model(input, output, name="classificatorMSE")
+        userInput = builtins.input(
+            'Training finished. If you want to continue, please enter which Model you want to train:\n 1:regressorMSE \n 2:classificatorXE \n 3:classificatorEMD \n 4:End Training \n')
 
-    #model = regressor
-    #model = classificatorMSE
+    print("Program ended")
+    exit()
 
-    #model = PaperModel()
-    #model.compile(
-    #    optimizer=tf.keras.optimizers.Adam(learning_rate=0.001),
-    #    loss="mse"
-    #)
-    #history = model.fit(
-    #    x=train_images,
-    #    validation_data=val_images,
-    #    epochs=10,
-    #    callbacks=[
-    #        tf.keras.callbacks.EarlyStopping(
-    #            monitor="val_loss",
-    #            patience=10,
-    #            restore_best_weights=True
-    #        )
-    #    ]
-    #)
-
-    #predicted_ages = model.predict(test_images)
-    #actual_ages = test_images.labels
-
-    #rmse = np.sqrt(model.evaluate(test_images, verbose=0))
-    #print("Test RMSE: {:.5f}".format(rmse))
-
-    #r2 = r2_score(actual_ages, predicted_ages)
-    #print("Test R^2 Score: {:.5f}".format(r2))
-    #print(np.average(predicted_ages))
-    #print(np.average(actual_ages))
 
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/
