@@ -250,7 +250,8 @@ if __name__ == '__main__':
                                                            mode="min",
                                                            verbose=1,
                                                            save_best_only=True,
-                                                           initial_value_threshold=2.925)
+                                                           #initial_value_threshold=2.925 #30
+                        )
                     ]
                 )
                 print("Training ended. Now to Testing")
