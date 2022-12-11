@@ -35,4 +35,21 @@ def build_general_model(input, nr_classes):
     else:
         raise ValueError('The Number of Classes is invalid.')
 
+def get_second_layer(input, nr_classes):
+    out0 = tf.keras.layers.Conv2D(filters=64, kernel_size=(7, 7), strides=(2, 2), padding="same")(input)
+    out1 = resblock(out0, filters=64, strides=0)
+    out2 = resblock(out1, filters=64, strides=0)
+    out3 = resblock(out2, filters=128, strides=1)
+    out4 = resblock(out3, filters=128, strides=0)
+    out5 = resblock(out4, filters=256, strides=1)
+    out6 = resblock(out5, filters=256, strides=0)
+    out7 = resblock(out6, filters=512, strides=1)
+    out8 = resblock(out7, filters=512, strides=0)
+    out = tf.keras.layers.GlobalAveragePooling2D()(out8)
+    out = tf.keras.layers.Flatten()(out)
+    return tf.keras.layers.Dense(nr_classes, activation="relu")(out)
+
+    #return tf.keras.layers.Softmax()(out)
+
+
 

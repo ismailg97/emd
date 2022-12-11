@@ -5,11 +5,16 @@ from typing import Callable
 import numpy as np
 import tensorflow as tf
 
-from keras import backend as K
+from src.utils import tensorToNumpy
+
+#from keras import backend as K
+import keras.backend as K
 from keras.callbacks import Callback
 from keras.losses import categorical_crossentropy
 
 GROUND_DISTANCE_FILE = os.path.dirname(__file__) / Path('../ground_distance.npy')
+
+
 
 
 def earth_mover_distance(
@@ -86,7 +91,7 @@ class GroundDistanceManager(Callback):
         self.ground_distance_matrix = None
         self.epoch_class_features = []
         self.epoch_labels = []
-        self.class_length = 8
+        self.class_length = 10
 
         file_path.mkdir(parents=True, exist_ok=True)
         self.file_path = file_path
@@ -96,7 +101,9 @@ class GroundDistanceManager(Callback):
         self.epoch_labels = labels_tensor
 
     def on_train_batch_end(self, batch, logs=None):
+        print(self.model.second_to_last_layer)
         self.epoch_class_features.append(self.model.second_to_last_layer)
+        print(self.epoch_class_features)
 
     def on_epoch_end(self, epoch, logs=None):
         self._update_ground_distance_matrix()
@@ -114,10 +121,13 @@ class GroundDistanceManager(Callback):
         normalized_features = self.epoch_class_features \
                               / tf.reduce_sum(self.epoch_class_features, axis=1, keepdims=True)
         class_labels = K.argmax(self.epoch_labels, axis=-1)
+        #print(class_labels)
         centroids = []
         for i in range(self.class_length):
             centroids.append(K.mean(normalized_features[class_labels == i], axis=0))
         centroids = tf.stack(centroids)
+        print(K.is_keras_tensor(centroids))
+        #tf.print(f'centroids: {tf.py_function(func=tensorToNumpy,inp=centroids)}')
         tf.print(f'centroids: {centroids.numpy()}')
         estimated_distances = []
         for i in range(self.class_length):

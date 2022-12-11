@@ -53,6 +53,6 @@ def load_data(mat_path):
     return d["image"], d["gender"][0], d["age"][0], d["db"][0], d["img_size"][0, 0], d["min_score"][0, 0]
 
 
-def load_image(filepath):
-    test_image = ut.load_img(filepath, target_size=(244, 244))
-    test_image = keras.preprocessing.image.img_to_array()
+def tensorToNumpy(a):
+    return a.numpy()
+
