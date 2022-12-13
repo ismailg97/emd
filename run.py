@@ -21,7 +21,6 @@ from src.utils import get_age
 from data_handlers.generators import getDataRegression, getDataClassification
 
 if __name__ == '__main__':
-
     ## Defining the different Models to trtain
     models = ['regressorMSE', 'classificatorXE', 'classificatorEMD']
 
@@ -145,30 +144,6 @@ if __name__ == '__main__':
                 print("Number of Classes selected as {}".format(nr_classes))
                 print("Next Step is preparing the Data. Please Wait...")
                 checkpoint_path = "./checkpoints/classificatorXE/{}/classificatorXE.ckpt".format(nr_classes)
-                #db = "imdb"
-                #image_dir = Path('./{}_crop'.format(db))
-                ## image_dir = Path('./age_prediction')
-                #mat_path = './{}_crop/{}.mat'.format(db, db)
-
-                ## Getting the Filepath of the Images and the Labels and concat it in Panda Array(Series) aka Dataframe called images
-                #filepaths = pd.Series(list(image_dir.glob(r'**/*.jpg')), name="Filepath").astype(str)
-                #ages = pd.Series(get_age(mat_path, db), name="Age")
-                #images = pd.concat([filepaths, ages], axis=1).sample(frac=1.0, random_state=1).dropna().reset_index(
-                #    drop=True)
-
-                ## Calculation of the Age Groups depending on the Nr of Classes declared earlier
-                #max_age = ages.max()
-                #interval = max_age / nr_classes
-                #floored_interval = math.floor(interval)
-                #ceiled_interval = math.ceil(interval)
-                #i = 0
-                #classes = []
-                #while len(classes) < nr_classes:
-                #    classes.append('{}-{}'.format(i, i + floored_interval - 1))
-                #    i += floored_interval
-                #images["Age"] = pd.Series(images["Age"].apply(
-                #    lambda x: "{}-{}".format(int((x // interval) * floored_interval),
-                #                             int((x // interval) * floored_interval + floored_interval - 1))))
 
                 ## use only 10000 images to speed up training time
                 #image_df = images.sample(20000, random_state=np.random.randint(1000)).reset_index(drop=True)
@@ -234,6 +209,30 @@ if __name__ == '__main__':
                     optimizer=tf.keras.optimizers.Adam(learning_rate=0.001),
                     loss=tf.keras.losses.CategoricalCrossentropy()
                 )
+
+                print("Training ended. Now to Testing")
+
+                predicted_ages = model.predict(test_images)
+                #actual_ages = test_images.labels
+                actual_ages = np.asarray(tf.one_hot(indices=test_images.labels, depth=nr_classes))
+
+                m = tf.keras.metrics.RootMeanSquaredError()
+                m.update_state(actual_ages, predicted_ages)
+                result = m.result().numpy()
+                print(result)
+
+                #predicted_ages = np.asarray(model.predict(test_images))
+
+
+                print("Testing finished. Results are: ")
+
+                # rmse = np.sqrt(model.evaluate(test_images, verbose=1))
+                # print("Test RMSE: {:.5f}".format(rmse))
+
+                # print(np.average(predicted_ages))
+                # print(np.average(actual_ages))
+                exit()
+
                 history = model.fit(
                     x=train_images,
                     validation_data=val_images,
@@ -251,22 +250,23 @@ if __name__ == '__main__':
                                                            verbose=1,
                                                            save_best_only=True,
                                                            #initial_value_threshold=2.925 #30
+                                                           initial_value_threshold=3.75365 #60
                         )
                     ]
                 )
                 print("Training ended. Now to Testing")
 
-                predicted_ages = model.predict(test_images)
-                actual_ages = test_images.labels
+                #predicted_ages = model.predict(test_images)
+                #actual_ages = test_images.labels
+
+                predicted_ages = np.asarray(model.predict(test_images))
+
+                actual_ages = np.asarray(tf.one_hot(indices=test_images.labels, depth=nr_classes))
 
                 print("Testing finished. Results are: ")
 
                 #rmse = np.sqrt(model.evaluate(test_images, verbose=1))
                 #print("Test RMSE: {:.5f}".format(rmse))
-
-                age_comparison = zip(predicted_ages,actual_ages)
-
-                print(age_comparison)
 
                 #print(np.average(predicted_ages))
                 #print(np.average(actual_ages))
@@ -283,30 +283,30 @@ if __name__ == '__main__':
                 print("Number of Classes selected as {}".format(nr_classes))
                 print("Next Step is preparing the Data. Please Wait...")
                 checkpoint_path = "./checkpoints/classificatorEMD/{}/classificatorEMD.ckpt".format(nr_classes)
-                db = "imdb"
-                image_dir = Path('./{}_crop'.format(db))
-                # image_dir = Path('./age_prediction')
-                mat_path = './{}_crop/{}.mat'.format(db, db)
+                #db = "imdb"
+                #image_dir = Path('./{}_crop'.format(db))
+                ## image_dir = Path('./age_prediction')
+                #mat_path = './{}_crop/{}.mat'.format(db, db)
 
                 ## Getting the Filepath of the Images and the Labels and concat it in Panda Array(Series) aka Dataframe called images
-                filepaths = pd.Series(list(image_dir.glob(r'**/*.jpg')), name="Filepath").astype(str)
-                ages = pd.Series(get_age(mat_path, db), name="Age")
-                images = pd.concat([filepaths, ages], axis=1).sample(frac=1.0, random_state=1).dropna().reset_index(
-                    drop=True)
+                #filepaths = pd.Series(list(image_dir.glob(r'**/*.jpg')), name="Filepath").astype(str)
+                #ages = pd.Series(get_age(mat_path, db), name="Age")
+                #images = pd.concat([filepaths, ages], axis=1).sample(frac=1.0, random_state=1).dropna().reset_index(
+                #    drop=True)
 
                 ## Calculation of the Age Groups depending on the Nr of Classes declared earlier
-                max_age = ages.max()
-                interval = max_age / nr_classes
-                floored_interval = math.floor(interval)
-                ceiled_interval = math.ceil(interval)
-                i = 0
-                classes = []
-                while len(classes) < nr_classes:
-                    classes.append('{}-{}'.format(i, i + floored_interval - 1))
-                    i += floored_interval
-                images["Age"] = pd.Series(images["Age"].apply(
-                    lambda x: "{}-{}".format(int((x // interval) * floored_interval),
-                                             int((x // interval) * floored_interval + floored_interval - 1))))
+                #max_age = ages.max()
+                #interval = max_age / nr_classes
+                #floored_interval = math.floor(interval)
+                #ceiled_interval = math.ceil(interval)
+                #i = 0
+                #classes = []
+                #while len(classes) < nr_classes:
+                #    classes.append('{}-{}'.format(i, i + floored_interval - 1))
+                #    i += floored_interval
+                #images["Age"] = pd.Series(images["Age"].apply(
+                #    lambda x: "{}-{}".format(int((x // interval) * floored_interval),
+                #                             int((x // interval) * floored_interval + floored_interval - 1))))
 
                 # while len(classes) < nr_classes:
                 #    classes.append(i)
@@ -317,7 +317,8 @@ if __name__ == '__main__':
                 # exit()
 
                 ## use only 10000 images to speed up training time and splitting images dataframe into train and test
-                image_df = images.sample(10000, random_state=np.random.randint(1000)).reset_index(drop=True)
+                #image_df = images.sample(10000, random_state=np.random.randint(1000)).reset_index(drop=True)
+                image_df, classes = getDataClassification("imdb", nr_classes)
                 train_df, test_df = train_test_split(image_df, train_size=0.7, shuffle=True, random_state=1)
 
                 ## Defining the ImageDataGenerator and what Preprocessing should be done to the images and normalize each image in image_df to have mean of 0 and deviation of 1
@@ -418,8 +419,8 @@ if __name__ == '__main__':
                 )
 
                 print("Training ended. Now to Testing")
-                predicted_ages = np.asarray(model.predict(test_images))
-                print(np.argmax(predicted_ages, axis=-1))
+                predicted_ages = model.predict(test_images)
+                #print(np.argmax(predicted_ages, axis=-1))
                 # predicted_ages = np.argmax(predicted_ages)
                 actual_ages = np.asarray(tf.one_hot(indices=test_images.labels, depth=nr_classes))
                 # print(predicted_ages)
