@@ -101,9 +101,8 @@ class GroundDistanceManager(Callback):
         self.epoch_labels = labels_tensor
 
     def on_train_batch_end(self, batch, logs=None):
-        print(self.model.second_to_last_layer)
         self.epoch_class_features.append(self.model.second_to_last_layer)
-        print(self.epoch_class_features)
+
 
     def on_epoch_end(self, epoch, logs=None):
         self._update_ground_distance_matrix()

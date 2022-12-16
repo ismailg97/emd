@@ -37,8 +37,7 @@ class PaperModel(tf.keras.Model):
         print(fx.shape)
         return out
 
-    def call(self, inputs=tf.keras.Input(shape=(224, 224,3), name="img"), training=None, mask=None):
-        print(inputs.shape)
+    def call(self, inputs, training=None, mask=None):
         out0 = tf.keras.layers.Conv2D(filters=64, kernel_size=(7, 7), strides=(2, 2), padding="same")(inputs)
         print(out0.shape)
         #out0 = self.maxPool(out0)
@@ -52,7 +51,6 @@ class PaperModel(tf.keras.Model):
         out7 = self.resblock(out6, filters=512, strides=1)
         out8 = self.resblock(out7, filters=512, strides=0)
         out = self.globalAvgPooling(out8)
-        print(self.dense(out).shape)
         return self.dense(out)
         #return self.softMax(out)
 

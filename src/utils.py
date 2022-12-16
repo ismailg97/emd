@@ -7,12 +7,8 @@ import keras.utils as ut
 
 
 def calc_age(taken, dob, face_score, second_face_score):
-    #print(str(face_score), str(second_face_score))
-    if 'n' in str(face_score) or 'a' not in str(second_face_score) or face_score < 2:
-        #print('-inf or nan detected')
+    if 'n' in str(face_score) or 'a' not in str(second_face_score) or face_score < 1:
         return np.nan
-    #if 'a' not in str(second_face_score):
-    # birth = datetime.fromordinal(max(int(dob) - 366, 1))
     birth = datetime.fromordinal(dob)
     age = int(taken - birth.year)
     if age < 0 or age > 100:

@@ -35,15 +35,27 @@ def getDataClassification(db, nr_classes):
         drop=True)
 
     ## Calculation of the Age Groups depending on the Nr of Classes declared earlier
-    max_age = ages.max()
-    interval = max_age / nr_classes
-    floored_interval = math.floor(interval)
-    i = 0
-    classes = []
-    while len(classes) < nr_classes:
-        classes.append('{}-{}'.format(i, i + floored_interval - 1))
-        i += floored_interval
-    images["Age"] = pd.Series(images["Age"].apply(
-        lambda x: "{}-{}".format(int((x // interval) * floored_interval),
-                                 int((x // interval) * floored_interval + floored_interval - 1))))
-    return images.sample(20000, random_state=np.random.randint(1000)).reset_index(drop=True), classes
+    #max_age = ages.max()
+    #interval = max_age / nr_classes
+    #floored_interval = math.floor(interval)
+    #i = 0
+    #classes = []
+    #while len(classes) < nr_classes:
+    #    classes.append('{}-{}'.format(i, i + floored_interval - 1))
+    #    i += floored_interval
+    #images["Age"] = pd.Series(images["Age"].apply(
+    #    lambda x: "{}-{}".format(int((x // interval) * floored_interval),
+    #                             int((x // interval) * floored_interval + floored_interval - 1))))
+    #return images.sample(20000, random_state=np.random.randint(1000)).reset_index(drop=True), classes
+
+    #max_age = ages.max()
+    #interval = max_age // nr_classes
+    #floored_interval = math.floor(interval)
+    #i = 0
+    #classes = []
+    #while len(classes) < nr_classes:
+    #    classes.append(i + 0.5*interval)
+    #    i += interval
+    #images["Age"] = pd.Series(images["Age"].apply(
+    #    lambda x: (x // nr_classes)*nr_classes + 0.5*interval))
+    return images.sample(10000, random_state=np.random.randint(1000)).reset_index(drop=True), ages.max()
