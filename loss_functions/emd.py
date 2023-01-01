@@ -28,6 +28,9 @@ def earth_mover_distance(
             y_pred: K.placeholder
     ) -> K.placeholder:
         y_true = tf.cast(y_true, tf.float32)
+        print(y_true)
+        y_pred = tf.cast(y_pred, tf.float32)
+        print(y_pred)
         return tf.reduce_mean(tf.square(tf.cumsum(y_true, axis=-1) - tf.cumsum(y_pred, axis=-1)), axis=-1)
 
     return _earth_mover_distance
@@ -125,7 +128,6 @@ class GroundDistanceManager(Callback):
         for i in range(self.class_length):
             centroids.append(K.mean(normalized_features[class_labels == i], axis=0))
         centroids = tf.stack(centroids)
-        print(K.is_keras_tensor(centroids))
         #tf.print(f'centroids: {tf.py_function(func=tensorToNumpy,inp=centroids)}')
         tf.print(f'centroids: {centroids.numpy()}')
         estimated_distances = []

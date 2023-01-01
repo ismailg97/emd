@@ -20,7 +20,7 @@ def getDataRegression(db):
     # ages = pd.Series(filepaths.apply(lambda x: os.path.split(os.path.split(x)[0])[1]), name="Age").astype(int)
     images = pd.concat([filepaths, ages], axis=1).sample(frac=1.0, random_state=1).dropna().reset_index(
         drop=True)
-    return images.sample(15000, random_state=np.random.randint(1000)).reset_index(drop=True)
+    return images.sample(25000, random_state=np.random.randint(1000)).reset_index(drop=True)
 
 
 def getDataClassification(db, nr_classes):
@@ -33,8 +33,8 @@ def getDataClassification(db, nr_classes):
     ages = pd.Series(get_age(mat_path, db), name="Age")
     images = pd.concat([filepaths, ages], axis=1).sample(frac=1.0, random_state=1).dropna().reset_index(
         drop=True)
-
-    ## Calculation of the Age Groups depending on the Nr of Classes declared earlier
+    return images.sample(25000, random_state=np.random.randint(1000)).reset_index(drop=True), ages.max()
+    # Calculation of the Age Groups depending on the Nr of Classes declared earlier
     #max_age = ages.max()
     #interval = max_age / nr_classes
     #floored_interval = math.floor(interval)
@@ -58,4 +58,4 @@ def getDataClassification(db, nr_classes):
     #    i += interval
     #images["Age"] = pd.Series(images["Age"].apply(
     #    lambda x: (x // nr_classes)*nr_classes + 0.5*interval))
-    return images.sample(10000, random_state=np.random.randint(1000)).reset_index(drop=True), ages.max()
+

@@ -13,7 +13,7 @@ def resblock(x, filters, strides):
     fx = tf.keras.layers.Conv2D(filters=filters, kernel_size=(3, 3), padding='same')(fx)
     out = tf.keras.layers.Add()([x_conv, fx])
     out = tf.keras.layers.BatchNormalization()(out)
-    out = tf.keras.layers.ReLU()(out)
+    out = tf.keras.layers.Activation("relu")(out)
     return out
 
 def build_general_model(input, nr_classes):
@@ -28,10 +28,10 @@ def build_general_model(input, nr_classes):
     out8 = resblock(out7, filters=512, strides=0)
     out = tf.keras.layers.GlobalAveragePooling2D()(out8)
     if nr_classes > 1:
-        out = tf.keras.layers.Dense(nr_classes, activation="relu")(out)
+        out = tf.keras.layers.Dense(nr_classes)(out)
         return tf.keras.layers.Softmax()(out)
     elif nr_classes == 1:
-        return tf.keras.layers.Dense(nr_classes, activation="relu")(out)
+        return tf.keras.layers.Dense(1)(out)
     else:
         raise ValueError('The Number of Classes is invalid.')
 
