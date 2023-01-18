@@ -105,7 +105,7 @@ if __name__ == '__main__':
                     callbacks=[
                         tf.keras.callbacks.EarlyStopping(
                             monitor="val_loss",
-                            patience=10,
+                            patience=5,
                             restore_best_weights=True,
                             mode="min"
                         ),
@@ -175,7 +175,7 @@ if __name__ == '__main__':
                 checkpoint_path = "./checkpoints/classificatorXE/{}/classificatorXE.ckpt".format(nr_classes)
 
                 ## use only 10000 images to speed up training time
-                image_df, max_age = getDataClassification(db="imdb", nr_classes=nr_classes)
+                image_df, max_age = getDataClassification(db="wiki", nr_classes=nr_classes)
                 train_df, test_df = train_test_split(image_df, train_size=0.7, shuffle=True, random_state=1)
 
                 test_labels = test_df["Age"]
@@ -246,7 +246,7 @@ if __name__ == '__main__':
                     target_size=(224, 224),
                     color_mode="rgb",
                     class_mode="raw",
-                    batch_size=256,
+                    batch_size=32,
                     shuffle=True,
                     seed=42,
                     subset="training"
@@ -259,7 +259,7 @@ if __name__ == '__main__':
                     target_size=(224, 224),
                     color_mode="rgb",
                     class_mode="raw",
-                    batch_size=256,
+                    batch_size=32,
                     shuffle=True,
                     seed=42,
                     subset="validation"
@@ -283,7 +283,7 @@ if __name__ == '__main__':
                     target_size=(224, 224),
                     color_mode="rgb",
                     class_mode="raw",
-                    batch_size=256,
+                    batch_size=32,
                     shuffle=False
                 )
 
@@ -301,16 +301,16 @@ if __name__ == '__main__':
                     metrics=["accuracy"]
                 )
 
-                print(model.summary())
+                #print(model.summary())
 
                 history = model.fit(
                     x=train_images,
                     validation_data=val_images,
-                    epochs=30,
+                    epochs=50,
                     callbacks=[
                         tf.keras.callbacks.EarlyStopping(
                             monitor="val_loss",
-                            patience=10,
+                            patience=5,
                             restore_best_weights=True,
                             mode="min"
                         ),
@@ -335,7 +335,7 @@ if __name__ == '__main__':
                 plt.ylabel('accuracy')
                 plt.xlabel('epoch')
                 plt.legend(['train', 'val'], loc='upper left')
-                plt.savefig(fname="./checkpoints/classificatorXE/{}/accuracy_fig".format(nr_classes))
+                plt.savefig(fname="./checkpoints/classificatorXE/{}/accuracy_fig-4".format(nr_classes))
                 plt.show()
                 # "Loss"
                 plt.plot(history.history['loss'])
@@ -344,12 +344,12 @@ if __name__ == '__main__':
                 plt.ylabel('loss')
                 plt.xlabel('epoch')
                 plt.legend(['train', 'val'], loc='upper left')
-                plt.savefig(fname="./checkpoints/classificatorXE/{}/loss_fig".format(nr_classes))
+                plt.savefig(fname="./checkpoints/classificatorXE/{}/loss_fig-4".format(nr_classes))
                 plt.show()
 
                 # All
                 pd.DataFrame(history.history).plot(figsize=(8, 5))
-                plt.savefig(fname="./checkpoints/classificatorXE/{}/all_fig".format(nr_classes))
+                plt.savefig(fname="./checkpoints/classificatorXE/{}/all_fig-4".format(nr_classes))
                 plt.show()
 
                 print("Training ended. Now to Testing")
@@ -380,7 +380,7 @@ if __name__ == '__main__':
                     for i, prob in enumerate(arr):
                         sum_value += (i * interval + interval * 0.5) * prob
                     avg_predicted_ages.append(sum_value)
-                print(avg_predicted_ages)
+                #print(avg_predicted_ages)
 
                 m = tf.keras.metrics.RootMeanSquaredError()
                 m.update_state(test_labels, avg_predicted_ages)
@@ -403,14 +403,11 @@ if __name__ == '__main__':
                 print("Testing finished. Results are: ")
 
                 print("Test Keren RMSE: {:.5f}".format(keren_result))  # rsme10 #rsme30  #rsme60
-                print("Test RMSE: {:.5f}".format(result))  # rsme10 20.06264 #rsme30  #rsme60
-                print("Test SKLearn RMSE Classified: {:.5f}".format(RMSE_class))  # rsme10  #rsme30  #rsme60
-                print("Test SKLearn RMSE Continuos: {:.5f}".format(RMSE_cont))  # rsme10  #rsme30  #rsme60
-                print("Test SKLearn RMSE Keren: {:.5f}".format(RMSE_keren))  # rsme10  #rsme30  #rsme60
+                print("Test RMSE (Continuos): {:.5f}".format(result))  # rsme10 20.06264 #rsme30  #rsme60
+                print("Test RMSE Classified: {:.5f}".format(RMSE_class))  # rsme10  #rsme30  #rsme60
 
-                print(np.average(prediction))
-                print(np.average(test_labels))
-                print(np.average(classified_labels))
+                print("Avg Predicted Ages: {}".format(np.average(prediction)))
+                print("Avg Actual Ages: {}".format(np.average(test_labels)))
 
                 OneOff = 0
                 for i in range(len(prediction_index)):
@@ -419,11 +416,11 @@ if __name__ == '__main__':
                 OneOffAcc = OneOff / len(prediction_index)
                 print("OneOffAcc: {}".format(OneOffAcc))
 
-                # rec_score = recall_score(, predicted_ages_index, average="macro")
-                # print("Test Recall Score: {}".format(rec_score))
+                rec_score = recall_score(labels_index, predicted_index, average="macro")
+                print("Test Recall Score: {}".format(rec_score))
 
-                # precision_sc = precision_score(actual_ages_index, predicted_ages_index, average='macro')
-                # print("Test Precision Score: {}".format(precision_sc))
+                precision_sc = precision_score(labels_index, prediction_index, average='macro')
+                print("Test Precision Score: {}".format(precision_sc))
 
                 exit()
 
@@ -441,7 +438,7 @@ if __name__ == '__main__':
 
                 ## use only 10000 images to speed up training time and splitting images dataframe into train and test
                 #image_df = images.sample(10000, random_state=np.random.randint(1000)).reset_index(drop=True)
-                image_df, max_age = getDataClassification(db="wiki", nr_classes=nr_classes)
+                image_df, max_age = getDataClassification(db="imdb", nr_classes=nr_classes)
                 train_df, test_df = train_test_split(image_df, train_size=0.7, shuffle=True, random_state=1)
 
                 test_labels = test_df["Age"]
@@ -491,9 +488,9 @@ if __name__ == '__main__':
                 train_df = train_df[columns]
                 test_df = test_df[columns]
 
-                print(train_df)
+                #print(train_df)
 
-                print(test_df)
+                #print(test_df)
 
                 ## Defining the ImageDataGenerator and what Preprocessing should be done to the images and normalize each image in image_df to have mean of 0 and deviation of 1
                 train_generator = pre_processing.preprocess_TrainImages(train_df)
@@ -509,7 +506,7 @@ if __name__ == '__main__':
                     target_size=(224, 224),
                     color_mode="rgb",
                     class_mode="raw",
-                    batch_size=128,
+                    batch_size=32,
                     shuffle=True,
                     seed=42,
                     subset="training"
@@ -522,7 +519,7 @@ if __name__ == '__main__':
                     target_size=(224, 224),
                     color_mode="rgb",
                     class_mode="raw",
-                    batch_size=128,
+                    batch_size=32,
                     shuffle=True,
                     seed=42,
                     subset="validation"
@@ -546,7 +543,7 @@ if __name__ == '__main__':
                     target_size=(224, 224),
                     color_mode="rgb",
                     class_mode="raw",
-                    batch_size=128,
+                    batch_size=32,
                     shuffle=False
                 )
 
@@ -577,7 +574,7 @@ if __name__ == '__main__':
                     epochs=30,
                     callbacks=[tf.keras.callbacks.EarlyStopping(
                         monitor="val_loss",
-                        patience=10,
+                        patience=5,
                         restore_best_weights=True,
                         mode="min"
                     ),
